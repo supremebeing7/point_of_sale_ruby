@@ -1,7 +1,7 @@
 development:
   adapter: postgresql
-  configuration: point_of_sale_development
+  database: point_of_sale_development
 
 test:
   adapter: postgresql
-  configuration: point_of_sale_test
+  database: point_of_sale_test
