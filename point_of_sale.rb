@@ -1,6 +1,10 @@
 require 'active_record'
 require './lib/product'
 require './lib/cashier'
+require './lib/checkout'
+require './lib/cart'
+require './lib/purchase'
+require 'pry'
 
 database_configurations = YAML::load(File.open('./db/config.yml'))
 development_configuration = database_configurations['development']
@@ -23,6 +27,8 @@ def menu
     puts "Press 'cl' to list all cashiers"
     puts "Press 'uc' to update a cashier"
     puts "Press 'dc' to delete a cashier"
+    puts "Press 'ch' to checkout"
+    puts "Press 'p' to print a receipt"
     puts "Press 'x' to exit"
     choice = gets.chomp.downcase
     case choice
@@ -44,6 +50,8 @@ def menu
         update_cashier
       when 'dc'
         delete_cashier
+      when 'ch'
+        checkout
       when 'x'
         "Good Bye!"
       else
@@ -104,6 +112,14 @@ def new_cashier
   puts "New cashier: (ID:#{cashier.id}) #{cashier.name} has been added "
 end
 
+def search_by_cashier_name
+  puts "Enter cashier name"
+  input_name = gets.chomp
+  cashier = Cashier.where(name: input_name)
+  cashier.each { |cashier| puts "(ID:#{cashier.id}) #{cashier.name}"}
+  cashier.first
+end
+
 def list_cashiers
   puts "Here is an inventory list of your cashiers"
   cashiers = Cashier.all
@@ -128,5 +144,30 @@ def delete_cashier
   del_cashier.destroy
 end
 
+def checkout
+  cashier = search_by_cashier_name
+  new_checkout = Checkout.create({cashier_id: cashier.id, receipt: 0})
+  add_to_checkout(new_checkout)
+  receipt = 0
+  Cart.where(checkout_id: new_checkout.id).each do |cart|
+    receipt += cart.purchase.qty * cart.purchase.product.price
+  end
+  puts "Your total is #{receipt}"
+end
+
+def add_to_checkout(new_checkout)
+  choice = "y"
+ until choice != 'y'
+  puts "Which item would you like to purchase?"
+  list_all_products
+  product = search_by_product_name
+  puts "Quantity:"
+  qty = gets.chomp.to_i
+  new_purchase = Purchase.create({product_id: product.id, qty: qty})
+  Cart.create({checkout_id: new_checkout.id, purchase_id: new_purchase.id})
+  puts "Add more items? ( y / n )"
+  choice = gets.chomp.downcase
+ end
+end
 
 welcome

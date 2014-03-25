@@ -5,7 +5,8 @@ require 'shoulda-matchers'
 require 'cashier'
 require 'product'
 require 'purchase'
-require 'sale'
+require 'cart'
+require 'checkout'
 
 
 ActiveRecord::Base.establish_connection(YAML::load(File.open('./db/config.yml'))["test"])
@@ -15,6 +16,7 @@ RSpec.configure do |config|
     Product.all.each { |product| product.destroy }
     Cashier.all.each { |cashier| cashier.destroy }
     Purchase.all.each { |purchase| purchase.destroy }
-    Sale.all.each { |sale| sale.destroy }
+    Cart.all.each { |cart| cart.destroy }
+    Checkout.all.each { |checkout| checkout.destroy }
  end
 end

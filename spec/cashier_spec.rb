@@ -1,5 +1,5 @@
 require 'spec_helper'
 
 describe Cashier do
-  it { should have_many :sales }
+  it { should have_many :checkouts }
 end
