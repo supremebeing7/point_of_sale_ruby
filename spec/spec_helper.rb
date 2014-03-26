@@ -5,6 +5,7 @@ require 'shoulda-matchers'
 require 'cart'
 require 'cashier'
 require 'checkout'
+require 'customer'
 require 'product'
 require 'purchase'
 
@@ -16,6 +17,7 @@ RSpec.configure do |config|
     Cart.all.each { |cart| cart.destroy }
     Cashier.all.each { |cashier| cashier.destroy }
     Checkout.all.each { |checkout| checkout.destroy }
+    Customer.all.each { |customer| customer.destroy }
     Product.all.each { |product| product.destroy }
     Purchase.all.each { |purchase| purchase.destroy }
  end

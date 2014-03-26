@@ -2,9 +2,12 @@ require 'active_record'
 require './lib/cart'
 require './lib/cashier'
 require './lib/checkout'
+require './lib/customer'
 require './lib/product'
 require './lib/purchase'
 require 'pry'
+require 'pry-rails'
+require 'pry-remote'
 
 database_configurations = YAML::load(File.open('./db/config.yml'))
 development_configuration = database_configurations['development']
@@ -83,10 +86,11 @@ def add_product
   product_name = gets.chomp
   puts "How much does it cost?"
   product_price = gets.chomp
-  if !Product.exists? ({:name => product_name, :price => product_price})
+  if !Product.exists? ({name: product_name})
     product = Product.create({:name => product_name, :price => product_price})
   else
-    product = Product.where({:name => product_name, :price => product_price}).first
+    product = Product.where({:name => product_name}).first
+    product.update(price: product_price)
   end
   puts "#{product.name}: $#{"%.2f" % product.price} ADDED!"
   sleep(2)
@@ -94,10 +98,7 @@ end
 
 def search_by_product_name
   puts "Enter product name"
-  input_name = gets.chomp
-  product = Product.where(name: input_name)
-  product.each { |product| puts "(ID:#{product.id}) #{product.name}: $#{"%.2f" % product.price}"}
-  product.first
+  Product.find_by name: gets.chomp
 end
 
 def list_all_products
@@ -128,17 +129,18 @@ end
 def new_cashier
   puts"Enter the name of the new cashier:"
   cashier_name = gets.chomp
-  cashier = Cashier.create(name: cashier_name)
+  if !Cashier.exists? ({name: cashier_name})
+    cashier = Cashier.create({name: cashier_name})
+  else
+    cashier = Cashier.where({name: cashier_name}).first
+  end
   puts "New cashier: (ID:#{cashier.id}) #{cashier.name} has been added"
   sleep(2)
 end
 
 def search_by_cashier_name
   puts "Enter cashier name"
-  input_name = gets.chomp
-  cashier = Cashier.where(name: input_name)
-  cashier.each { |cashier| puts "(ID:#{cashier.id}) #{cashier.name}"}
-  cashier.first
+  Cashier.find_by name: gets.chomp
 end
 
 def list_cashiers
@@ -149,7 +151,7 @@ end
 
 def update_cashier
   cashier = search_by_cashier_name
-  puts "Enter your new name"
+  puts "Enter new cashier name"
   updated_name = gets.chomp
   puts "#{cashier.name} UPDATED TO #{updated_name}"
   cashier.update(name: updated_name)
@@ -166,17 +168,24 @@ end
 def checkout
   system "clear"
   cashier = search_by_cashier_name
-  new_checkout = Checkout.create({cashier_id: cashier.id, receipt: 0})
+  puts "Enter a customer name"
+  customer_name = gets.chomp
+  if !Customer.exists? ({name: customer_name})
+    customer = Customer.create({name: customer_name})
+  else
+    customer = Customer.where({name: customer_name}).first
+  end
+  new_checkout = Checkout.create({cashier_id: cashier.id, customer_id: customer.id, receipt: 0})
   add_to_checkout(new_checkout)
   receipt = 0
   Cart.where(checkout_id: new_checkout.id).each do |cart|
     puts "\t---  #{cart.purchase.product.name}  ---"
-    puts "\t$#{"%.2f%" % cart.purchase.product.price} * QTY: #{cart.purchase.qty}"
-    puts "\t$#{"%.2f%" % (cart.purchase.qty * cart.purchase.product.price)}\n\n"
+    puts "\t$#{'%.2f%' % cart.purchase.product.price} * QTY: #{cart.purchase.qty}"
+    puts "\t$#{'%.2f%' % (cart.purchase.qty * cart.purchase.product.price)}\n\n"
     receipt += cart.purchase.qty * cart.purchase.product.price
   end
   new_checkout.update(cashier_id: cashier.id, receipt: receipt)
-  puts "---- Your total is $#{"%.2f%" % receipt} ----\n\n"
+  puts "---- Your total is $#{'%.2f%' % receipt} ----\n\n"
   puts "Press 'Enter' to return to the main menu"
   gets.chomp
 end
@@ -231,12 +240,32 @@ def customers_served
 end
 
 def return_items
-  #ADD CUSTOMER IN PREVIOUS FUNCTIONALITY
-  #SEARCH FOR CHECKOUTS BY THAT CUSTOMER
-  #HAVE USER INPUT ITEM TO RETURN
-  #CHECK TO MAKE SURE CUSTOMER PURCHASED THAT ITEM
-  #RECEIPT - ITEM COST, UPDATE RECEIPT
-  #SHOW NEW TOTAL COST, AND AMOUNT REFUNDED
+  puts "What is the customer name?"
+  customer = Customer.find_by name: gets.chomp
+  puts "Which item would you like to return?"
+  puts "(Enter 'list' to see a list of this customer's purchases.)"
+  item_name = gets.chomp
+  case item_name
+  when 'list', 'LIST', 'List'
+    customer.checkouts.each do |checkout|
+      checkout.carts.each { |cart| puts cart.purchase.product.name }
+    end
+    return_items
+  else
+    customer.checkouts.each do |checkout|
+      checkout.carts.each do |cart|
+        if cart.purchase.product.name == item_name
+          cart.purchase.update(qty: cart.purchase.qty - 1)
+          puts "#{cart.purchase.product.name} has been returned"
+          puts "--- $#{'%.2f' % cart.purchase.product.price} has been refunded"
+          checkout.update(receipt: checkout.receipt - cart.purchase.product.price)
+          puts "\n\nPress 'enter' to return to the main menu."
+          gets.chomp
+          #ADD TO RETURNS TABLE
+        end
+      end
+    end
+  end
 end
 
 welcome
