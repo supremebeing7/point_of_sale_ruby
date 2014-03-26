@@ -31,6 +31,8 @@ def menu
     puts "Press 'p' to print a receipt"
     puts "Press 'sd' to tally daily sales"
     puts "Press 'sp' to tally sales using dates"
+    puts "Press 'cu' to view how many customers a cashier has checked out"
+    puts "Press 'r' to return items"
     puts "Press 'x' to exit"
     choice = gets.chomp.downcase
     case choice
@@ -58,6 +60,10 @@ def menu
         sales_day
       when 'sp'
         sales_period
+      when 'cu'
+        customers_served
+      when 'r'
+        return_items
       when 'x'
         "Good Bye!"
       else
@@ -193,5 +199,25 @@ def sales_period
   puts "Total sales for the period #{start_date} - #{end_date}: $#{period_sales}"
 end
 
+def customers_served
+  puts "For which cashier would you like details?"
+  cashier = search_by_cashier_name
+  puts "Give the start date and end date for the period for which you would like total sales (format: mm/dd/yyyy)"
+  puts "Start date:"
+  start_date = gets.chomp
+  puts "End date:"
+  end_date = gets.chomp
+  customer_count = Checkout.where(cashier_id: cashier.id).count
+  puts "Customers served: #{customer_count}"
+end
+
+def return_items
+  #ADD CUSTOMER IN PREVIOUS FUNCTIONALITY
+  #SEARCH FOR CHECKOUTS BY THAT CUSTOMER
+  #HAVE USER INPUT ITEM TO RETURN
+  #CHECK TO MAKE SURE CUSTOMER PURCHASED THAT ITEM
+  #RECEIPT - ITEM COST, UPDATE RECEIPT
+  #SHOW NEW TOTAL COST, AND AMOUNT REFUNDED
+end
 
 welcome
