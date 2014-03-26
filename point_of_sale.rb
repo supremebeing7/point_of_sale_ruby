@@ -29,6 +29,8 @@ def menu
     puts "Press 'dc' to delete a cashier"
     puts "Press 'ch' to checkout"
     puts "Press 'p' to print a receipt"
+    puts "Press 'sd' to tally daily sales"
+    puts "Press 'sp' to tally sales using dates"
     puts "Press 'x' to exit"
     choice = gets.chomp.downcase
     case choice
@@ -52,6 +54,10 @@ def menu
         delete_cashier
       when 'ch'
         checkout
+      when 'sd'
+        sales_day
+      when 'sp'
+        sales_period
       when 'x'
         "Good Bye!"
       else
@@ -152,6 +158,7 @@ def checkout
   Cart.where(checkout_id: new_checkout.id).each do |cart|
     receipt += cart.purchase.qty * cart.purchase.product.price
   end
+  new_checkout.update(cashier_id: cashier.id, receipt: receipt)
   puts "Your total is #{receipt}"
 end
 
@@ -169,5 +176,22 @@ def add_to_checkout(new_checkout)
   choice = gets.chomp.downcase
  end
 end
+
+def sales_day
+  day_total = Time.now.strftime("%m/%d/%Y")
+  dailysale = Checkout.where('updated_at > ?', day_total).sum("receipt")
+  puts "Total sales for today, #{day_total}: $#{dailysale}"
+end
+
+def sales_period
+  puts "Give the start date and end date for the period for which you would like total sales (format: mm/dd/yyyy)"
+  puts "Start date:"
+  start_date = gets.chomp
+  puts "End date:"
+  end_date = gets.chomp
+  period_sales = Checkout.where(updated_at: start_date..end_date).sum("receipt")
+  puts "Total sales for the period #{start_date} - #{end_date}: $#{period_sales}"
+end
+
 
 welcome
