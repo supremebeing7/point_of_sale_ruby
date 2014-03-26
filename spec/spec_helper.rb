@@ -2,21 +2,21 @@ require 'active_record'
 require 'rspec'
 require 'shoulda-matchers'
 
+require 'cart'
 require 'cashier'
+require 'checkout'
 require 'product'
 require 'purchase'
-require 'cart'
-require 'checkout'
 
 
 ActiveRecord::Base.establish_connection(YAML::load(File.open('./db/config.yml'))["test"])
 
 RSpec.configure do |config|
   config.after(:each) do
-    Product.all.each { |product| product.destroy }
-    Cashier.all.each { |cashier| cashier.destroy }
-    Purchase.all.each { |purchase| purchase.destroy }
     Cart.all.each { |cart| cart.destroy }
+    Cashier.all.each { |cashier| cashier.destroy }
     Checkout.all.each { |checkout| checkout.destroy }
+    Product.all.each { |product| product.destroy }
+    Purchase.all.each { |purchase| purchase.destroy }
  end
 end
